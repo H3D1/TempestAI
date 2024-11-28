@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TempestAI - Activity Recommender</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         .star {
             font-size: 2rem; /* Size of the stars */
@@ -24,14 +25,17 @@
         .tech-badge:hover {
             transform: scale(1.05);
         }
+        #map {
+            height: 400px; /* Set height for the map */
+            width: 100%; /* Full width */
+            margin-top: 20px; /* Space above the map */
+        }
     </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8 max-w-2xl">
         <div class="bg-white shadow-2xl rounded-2xl p-8">
-            <h1 class="text-4xl font-bold text-center text-blue-600 mb-6">
-                Tempest<span class="text-yellow-500">AI</span>
-            </h1>
+            <h1 class="text-4xl font-bold text-center text-blue-600 mb-6">Tempest<span class="text-yellow-500">AI</span></h1>
 
             <div id="recommendation-section" class="text-center">
                 <button id="recommend-button" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition">
@@ -51,9 +55,13 @@
                     <div id="activity-recommendations" class="mb-4"></div>
 
                     <div id="friendly-message" class="mt-4 text-center italic text-gray-600">
-                        Here are some fun activities you can try!
+                        Find your next leizure activity within your area!
                     </div>
                 </div>
+
+                <!-- Map Section -->
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Your Location</h3>
+                <div id="map"></div> <!-- Map container -->
 
                 <!-- Star Rating System -->
                 <div class="mt-6">
@@ -67,8 +75,7 @@
                     </div>
                     <button id="submit-rating-button" class="bg-blue-500 text-white px-4 py-2 rounded mt-2">Submit Rating</button>
                 </div>
-
-                <!-- Removed Feedback Buttons -->
+                
             </div>
 
             <!-- Technologies Used Section -->
@@ -85,10 +92,31 @@
         </div>
     </div>
 
+    <!-- Load Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
     <!-- JavaScript Logic -->
     <script>
+// Initialize global variables
 let userRating = 0; // Variable to store user's rating
+let map;
 
+// Function to initialize the map
+function initMap(latitude, longitude) {
+    // Create a new map instance centered on the user's location
+    map = L.map("map").setView([latitude, longitude], 13); // Zoom level set to 13
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add a marker for the user's location
+    L.marker([latitude, longitude]).addTo(map).bindPopup("You are here!").openPopup();
+}
+
+// Star rating functionality
 document.querySelectorAll('#star-rating .star').forEach(star => {
     star.addEventListener('click', function() {
         userRating = this.getAttribute('data-value'); // Get the rating value
@@ -130,6 +158,7 @@ document.getElementById('submit-rating-button').addEventListener('click', functi
    }
 });
 
+// Recommendation button functionality
 document.getElementById('recommend-button').addEventListener('click', async () => {
     const loadingEl = document.getElementById('loading');
     const resultEl = document.getElementById('recommendation-result');
@@ -171,6 +200,9 @@ document.getElementById('recommend-button').addEventListener('click', async () =
                    activityRecommendationsEl.innerHTML = `
                        <h3 class='font-bold'>Activities:</h3> ${data.recommendation.split('Recommended Activities: ')[1] || ''}.
                    `;
+
+                   // Initialize map with user's location
+                   initMap(position.coords.latitude, position.coords.longitude);
 
                } catch (fetchError) {
                    console.error('Fetch error:', fetchError);
