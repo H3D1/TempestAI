@@ -1,0 +1,3 @@
+good: 4
+average: 3
+average: 3

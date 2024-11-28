@@ -5,11 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TempestAI - Activity Recommender</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .star {
+            font-size: 2rem; /* Size of the stars */
+            color: gray; /* Default color */
+        }
+        .star.selected {
+            color: gold; /* Color when selected */
+        }
+        .tech-badge {
+            background-color: #e0f7fa; /* Light cyan background */
+            color: #00796b; /* Dark teal text */
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .tech-badge:hover {
+            transform: scale(1.05);
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8 max-w-2xl">
         <div class="bg-white shadow-2xl rounded-2xl p-8">
-            <h1 class="text-4xl font-bold text-center text-blue-600 mb-6">TempestAI</h1>
+            <h1 class="text-4xl font-bold text-center text-blue-600 mb-6">
+                Tempest<span class="text-yellow-500">AI</span>
+            </h1>
 
             <div id="recommendation-section" class="text-center">
                 <button id="recommend-button" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition">
@@ -33,117 +55,144 @@
                     </div>
                 </div>
 
+                <!-- Star Rating System -->
                 <div class="mt-6">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4">How was your recommendation?</h3>
-                    <div class="flex justify-center space-x-4">
-                        <button id="helpful-button" class="bg-green-500 text-white px-4 py-2 rounded">Helpful</button>
-                        <button id="not-helpful-button" class="bg-red-500 text-white px-4 py-2 rounded">Not Helpful</button>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Rate Your Experience</h3>
+                    <div id="star-rating" class="flex justify-center">
+                        <span class="star cursor-pointer" data-value="1">★</span>
+                        <span class="star cursor-pointer" data-value="2">★</span>
+                        <span class="star cursor-pointer" data-value="3">★</span>
+                        <span class="star cursor-pointer" data-value="4">★</span>
+                        <span class="star cursor-pointer" data-value="5">★</span>
                     </div>
+                    <button id="submit-rating-button" class="bg-blue-500 text-white px-4 py-2 rounded mt-2">Submit Rating</button>
                 </div>
+
+                <!-- Removed Feedback Buttons -->
             </div>
 
+            <!-- Technologies Used Section -->
             <div class="mt-8 text-center">
                 <h4 class="text-lg font-semibold text-gray-700 mb-4">Technologies Used</h4>
                 <div class="flex flex-wrap justify-center gap-4">
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">Python Flask</span>
-                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full">spaCy NLP</span>
-                    <span class="bg-purple-100 text-purple-800 px=3 py=1 rounded-full">OpenWeatherMap API</span>
-                    <span class="bg-indigo-100 text-indigo=800 px=3 py=1 rounded-full">Geoapify Geocoding</span>
-                    <span class="bg-pink=100 text-pink=800 px=3 py=1 rounded-full">Tailwind CSS</span>
+                    <span class="tech-badge">Python Flask</span>
+                    <span class="tech-badge">spaCy NLP</span>
+                    <span class="tech-badge">OpenWeatherMap API</span>
+                    <span class="tech-badge">Geoapify Geocoding</span>
+                    <span class="tech-badge">Tailwind CSS</span>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- JavaScript Logic -->
     <script>
-    document.getElementById('recommend-button').addEventListener('click', async () => {
-        const loadingEl = document.getElementById('loading');
-        const resultEl = document.getElementById('recommendation-result');
-        const locationInfoEl = document.getElementById('location-info');
-        const weatherInfoEl = document.getElementById('weather-info');
-        const activityRecommendationsEl = document.getElementById('activity-recommendations');
+let userRating = 0; // Variable to store user's rating
 
-        loadingEl.classList.remove('hidden');
-        resultEl.classList.add('hidden');
-
-        try {
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(async (position) => {
-                    try {
-                        const response = await fetch('http://localhost:5000/recommend', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                latitude: position.coords.latitude,
-                                longitude: position.coords.longitude
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        loadingEl.classList.add('hidden');
-                        resultEl.classList.remove('hidden');
-
-                        locationInfoEl.innerHTML = `
-                            <h3 class="font-bold">Location:</h3>
-                            ${data.location.city}, ${data.location.country}
-                        `;
-
-                        weatherInfoEl.innerHTML = `
-                            <h3 class="font-bold">Weather:</h3>
-                            It's currently ${data.weather.temperature}°C with ${data.weather.description}.
-                        `;
-
-                        activityRecommendationsEl.innerHTML = `
-                            <h3 class="font-bold">Activities:</h3>
-                            ${data.recommendation.split('Recommended Activities: ')[1] || 'No recommendations available.'}
-                        `;
-
-                    } catch (fetchError) {
-                        console.error('Fetch error:', fetchError);
-                        alert('Error fetching recommendations. Please try again.');
-                        loadingEl.classList.add('hidden');
-                    }
-                }, (error) => {
-                    console.error('Geolocation error:', error);
-                    alert('Please enable location services to get recommendations');
-                    loadingEl.classList.add('hidden');
-                });
-            } else {
-                alert('Geolocation is not supported by your browser');
-                loadingEl.classList.add('hidden');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('An unexpected error occurred');
-            loadingEl.classList.add('hidden');
+document.querySelectorAll('#star-rating .star').forEach(star => {
+    star.addEventListener('click', function() {
+        userRating = this.getAttribute('data-value'); // Get the rating value
+        
+        // Highlight selected stars
+        document.querySelectorAll('#star-rating .star').forEach(s => {
+            s.classList.remove('selected');
+        });
+        
+        for (let i = 0; i < userRating; i++) {
+            document.querySelectorAll('#star-rating .star')[i].classList.add('selected');
         }
     });
+});
 
-    document.getElementById('helpful-button').addEventListener('click', () => {
-        sendFeedback('positive feedback');
-    });
-
-    document.getElementById('not-helpful-button').addEventListener('click', () => {
-        sendFeedback('negative feedback');
-    });
-
-    function sendFeedback(feedback) {
-        fetch('http://localhost:5000/send-feedback', {
+document.getElementById('submit-rating-button').addEventListener('click', function() {
+    if (userRating > 0) {
+        // Send the rating to the server
+        fetch('http://localhost:5000/submit-rating', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ feedback: feedback })
+            body: JSON.stringify({ rating: userRating })
         })
         .then(response => response.json())
         .then(data => {
             alert("Thank you for your feedback!");
+            
+            userRating = 0; // Reset rating after submission
+            
+            // Reset star colors
+            document.querySelectorAll('#star-rating .star').forEach(s => s.classList.remove('selected'));
+            
         })
-        .catch(error => console.error('Error sending feedback:', error));
-    }
-    </script>
+        .catch(error => console.error('Error submitting rating:', error));
+    } else {
+       alert("Please select a rating before submitting.");
+   }
+});
+
+document.getElementById('recommend-button').addEventListener('click', async () => {
+    const loadingEl = document.getElementById('loading');
+    const resultEl = document.getElementById('recommendation-result');
+    const locationInfoEl = document.getElementById('location-info');
+    const weatherInfoEl = document.getElementById('weather-info');
+    const activityRecommendationsEl = document.getElementById('activity-recommendations');
+
+    loadingEl.classList.remove('hidden');
+    resultEl.classList.add('hidden');
+
+    try {
+       if ("geolocation" in navigator) {
+           navigator.geolocation.getCurrentPosition(async (position) => {
+               try {
+                   const response = await fetch('http://localhost:5000/recommend', {
+                       method: 'POST',
+                       headers: {
+                           'Content-Type': 'application/json'
+                       },
+                       body: JSON.stringify({
+                           latitude: position.coords.latitude,
+                           longitude: position.coords.longitude
+                       })
+                   });
+
+                   const data = await response.json();
+
+                   loadingEl.classList.add('hidden');
+                   resultEl.classList.remove('hidden');
+
+                   locationInfoEl.innerHTML = `
+                       <h3 class='font-bold'>Location:</h3> ${data.location.city}, ${data.location.country}
+                   `;
+
+                   weatherInfoEl.innerHTML = `
+                       <h3 class='font-bold'>Weather:</h3> It's currently ${data.weather.temperature}°C with ${data.weather.description}.
+                   `;
+
+                   activityRecommendationsEl.innerHTML = `
+                       <h3 class='font-bold'>Activities:</h3> ${data.recommendation.split('Recommended Activities: ')[1] || ''}.
+                   `;
+
+               } catch (fetchError) {
+                   console.error('Fetch error:', fetchError);
+                   alert('Error fetching recommendations. Please try again.');
+                   loadingEl.classList.add('hidden');
+               }
+           }, (error) => {
+               console.error('Geolocation error:', error);
+               alert('Please enable location services to get recommendations');
+               loadingEl.classList.add('hidden');
+           });
+       } else {
+           alert('Geolocation is not supported by your browser');
+           loadingEl.classList.add('hidden');
+       }
+   } catch (error) {
+       console.error('Error:', error);
+       alert('An unexpected error occurred');
+       loadingEl.classList.add('hidden');
+   }
+});
+</script>
+
 </body>
 </html>

@@ -4,7 +4,6 @@ import random
 from flask import Flask, request, jsonify
 from datetime import datetime
 from flask_cors import CORS
-from flask_mail import Mail, Message
 
 # Load spaCy English language model
 nlp = spacy.load("en_core_web_sm")
@@ -12,20 +11,12 @@ nlp = spacy.load("en_core_web_sm")
 app = Flask(__name__)
 CORS(app)
 
-# Configure Flask-Mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'TempestAI700@gmail.com'  # Replace with your email
-app.config['MAIL_PASSWORD'] = 'T3mpestA1'  # Replace with your password or use environment variables
-mail = Mail(app)
-
-# API keys for weather and holiday services
+# API keys for weather and holiday services (keep your existing keys)
 WEATHER_API_KEY = "a134b189fda91998f757308c019ea4f3"
 HOLIDAY_API_KEY = "f+x1TcSMIBurP7YC8pgjKw==8cCHKvn8VpJBWuG9"
 GEOAPIFY_API_KEY = "4adf872c5b2a462b86453a37b2f39342"
 
-# Comprehensive activity database with detailed categorization
+# Comprehensive activity database with detailed categorization (keep your existing database)
 ACTIVITY_DATABASE = {
     'indoor': {
         'rainy': [
@@ -112,26 +103,29 @@ def recommend():
         print(f"Error in recommendation route: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/send-feedback', methods=['POST'])
-def send_feedback():
+@app.route('/submit-rating', methods=['POST'])
+def submit_rating():
     data = request.json
-    feedback_type = data.get('feedback')
+    rating = data.get('rating')
 
-    msg_body = f"User Feedback: {feedback_type}"
-    
-    msg = Message("User Feedback", sender='TempestAI700@gmail.com', recipients=['bejaouimedhedi2@gmail.com'])
-    
-    # Send simple positive/negative feedback message
-    if feedback_type == "positive feedback":
-        msg.body = "Positive feedback received from user."
+    if not rating:
+        return jsonify({'status': 'error', 'message': 'No rating provided'}), 400
+
+    # Determine the category based on the rating
+    if int(rating) > 3:
+        category = "good"
+    elif int(rating) == 3:
+        category = "average"
     else:
-        msg.body = "Negative feedback received from user."
+        category = "bad"
 
+    # Store the rating in a text file with its category
     try:
-        mail.send(msg)
+        with open('ratings.txt', 'a') as f:
+            f.write(f"{category}: {rating}\n")  # Append the category and rating to the file
         return jsonify({'status': 'success'}), 200
     except Exception as e:
-        print(f"Error sending email: {e}")
+        print(f"Error saving rating: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 def generate_nlp_recommendation(weather, city, country):
@@ -210,7 +204,7 @@ def get_weather(latitude, longitude):
                  "description": weather_data["weather"][0]["description"]
              }
      except Exception as e:
-          print(f"Weather API error: {e}")
+         print(f"Weather API error: {e}")
      
      return {}
 
