@@ -6,6 +6,8 @@
     <title>Tempest[AI] - Your Smart Recommendation App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8 max-w-2xl">
@@ -34,8 +36,15 @@
                     <h3 class="text-xl font-semibold text-gray-700 mb-4">Your Recommendations</h3>
                     <ul id="recommendations-list" class="list-disc list-inside"></ul>
 
-                    <div id="map" class="mt-4"></div>
-                    
+                    <!-- Map Container -->
+                    <div id="map" class="mt-4" style="height: 400px;"></div>
+
+                    <!-- Technologies Footer -->
+                    <div class="mt-4 text-center text-gray-600">
+                        <h4 class="font-semibold">Technologies Used:</h4>
+                        <p>AI, Machine Learning (K-Nearest Neighbors), Flask, OpenWeatherMap, GeoApify, Foursquare, Leaflet.js</p>
+                    </div>
+
                     <div id="friendly-message" class="mt-4 text-center italic text-gray-600">
                         Find your next leisure activity within your area!
                     </div>
@@ -98,6 +107,27 @@
                     } else {
                         attractionsInfo.innerHTML = 'No nearby attractions found.';
                     }
+
+                    // Show map with user's position and nearby attractions
+                    const map = L.map('map').setView([latitude, longitude], 13);
+
+                    // Add OpenStreetMap tiles
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+
+                    // Add user's position marker
+                    L.marker([latitude, longitude]).addTo(map)
+                        .bindPopup("Your Position").openPopup();
+
+                    // Add nearby attraction markers
+                    response.data.nearby_attractions.forEach(function(attraction) {
+                        const lat = attraction.location.latitude;
+                        const lon = attraction.location.longitude;
+                        L.marker([lat, lon]).addTo(map)
+                            .bindPopup(attraction.name);
+                    });
+
                 })
                 .catch(function(error) {
                     console.error('Error:', error);
